@@ -7,4 +7,4 @@ Install dependencies
 Build and run server
   - npm run start
   
-The copy and paste the url on the client device to control
+Then copy and paste the url on the client device to control your machine
