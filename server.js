@@ -1,52 +1,38 @@
 #!/usr/bin/env node
 
-/**
- * Module dependencies.
- */
+// Module dependencies.
+const app = require("./app");
+const http = require("http");
+const robot = require("robotjs");
+const os = require("os");
+const qrcode = require("qrcode-terminal");
+const handleSocketEvents = require("./socket");
 
-var app = require("./app");
-var http = require("http");
-var robot = require("robotjs");
-var os = require("os");
-var qrcode = require("qrcode-terminal");
-
-var handleSocketEvents = require("./socket");
-
-/**
- * Get port from environment and store in Express.
- */
-
-var port = normalizePort(process.env.PORT || "4000");
+// Get port from environment and store in Express.
+const port = normalizePort(process.env.PORT || "4000");
 app.set("port", port);
 
-/**
- * Create HTTP server.
- */
+// Create HTTP server.
+const server = http.createServer(app);
 
-var server = http.createServer(app);
-
-/**
- * Listen on provided port, on all network interfaces.
- */
-
+// Listen on provided port, on all network interfaces.
 server.listen(port, "0.0.0.0");
 server.on("error", onError);
 server.on("listening", onListening);
 
-var io = require("socket.io")(server);
+const io = require("socket.io")(server);
 
 io.on("connection", socket => {
   handleSocketEvents(socket, robot);
+  console.log(socket);
   console.log("someon connected");
 });
 
 const ifaces = os.networkInterfaces();
-/**
- * Normalize a port into a number, string, or false.
- */
 
+// Normalize a port into a number, string, or false.
 function normalizePort(val) {
-  var port = parseInt(val, 10);
+  const port = parseInt(val, 10);
 
   if (isNaN(port)) {
     // named pipe
@@ -61,16 +47,13 @@ function normalizePort(val) {
   return false;
 }
 
-/**
- * Event listener for HTTP server "error" event.
- */
-
+// Event listener for HTTP server "error" event.
 function onError(error) {
   if (error.syscall !== "listen") {
     throw error;
   }
 
-  var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+  const bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -87,10 +70,7 @@ function onError(error) {
   }
 }
 
-/**
- * Event listener for HTTP server "listening" event.
- */
-
+// Event listener for HTTP server "listening" event.
 function onListening() {
   Object.keys(ifaces).forEach(ifname =>
     ifaces[ifname].forEach(iface => {
