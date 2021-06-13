@@ -1,5 +1,19 @@
 <template>
   <div class="q-pa-md row justify-center">
+    <input
+      @keypress="handleKeypress()"
+      type="text"
+      style="margin: 0 16px 10px 16px;"
+      v-model="lastValue"
+    />
+    <q-btn
+      color="primary"
+      @click="keyTap('backspace')"
+      rounded
+      style="margin: 0 16px 10px 0px;"
+      >BACK</q-btn
+    >
+
     <q-card
       cols="10"
       v-touch-pan.prevent.mouse="handlePan"
@@ -68,7 +82,26 @@
         <q-icon name="touch_app" />
       </div>
     </q-card>
+
     <div style="width: 100%; " class="q-pa-md row justify-center ">
+      <q-btn-group rounded>
+        <q-btn
+          @click="handleClick('left')"
+          rounded
+          color="primary"
+          label="LEFT"
+        />
+
+        <q-btn
+          @click="handleClick('right')"
+          rounded
+          auto-close
+          color="primary"
+          label="RIGHT"
+        />
+      </q-btn-group>
+    </div>
+    <div style="width: 100%; " class=" row justify-center ">
       <q-toggle
         cols="2"
         v-model="showInfo"
@@ -81,10 +114,7 @@
       <q-badge style="height: 26px; font-size: 14px;" color="primary">
         Sensitivity: {{ sensitivity }} (1 to 10)
       </q-badge>
-    
-
     </div>
-
   </div>
 </template>
 
@@ -99,7 +129,11 @@ export default {
       info: null,
       panning: false,
       sensitivity: 2,
-      showInfo: false
+      showInfo: false,
+      delay: 700,
+      clicks: 0,
+      timer: null,
+      lastValue: ""
     };
   },
 
@@ -118,30 +152,59 @@ export default {
         y: info.delta.y * this.sensitivity,
         scroll: false
       });
+    },
+
+    handleClick(button) {
+      this.clicks++;
+      let double = false;
+
+      if (this.clicks === 1) {
+        console.log("single click");
+        this.timer = setTimeout(() => {
+          this.clicks = 0;
+        }, this.delay);
+        double = false;
+      } else {
+        console.log("double click");
+        clearTimeout(this.timer);
+        this.clicks = 0;
+        double = true;
+      }
+
+      socket.mouseClick({ button: button, double });
+    },
+
+    handleKeypress() {
+      console.log("typing: ", this.lastValue);
+      socket.keypress(this.lastValue);
+      this.lastValue = "";
+    },
+    keyTap(key) {
+      console.log("keyTap: ", key);
+      socket.keyTap(key);
     }
   },
 
   mounted() {
-    var joysticks = {
-      static: {
-        zone: document.querySelector(".zone.static"),
-        mode: "static",
-        position: {
-          left: "50%",
-          top: "50%"
-        },
-        color: "blue"
-      }
-    };
-    let joystick;
-    let evt = "static";
-
-    var type =
-      typeof evt === "string" ? evt : evt.target.getAttribute("data-type");
-    if (joystick) {
-      joystick.destroy();
-    }
-    joystick = nipplejs.create(joysticks[type]);
+    // var joysticks = {Hello world!
+    //   static: {
+    //     zone: document.querySelector(".zone.static"),
+    //     mode: "static",
+    //     position: {
+    //       left: "50%",
+    //       top: "50%"
+    //     },
+    //     color: "blue"
+    //   }
+    // };
+    // let joystick;
+    // let evt = "static";
+    // var type =
+    //   typeof evt === "string" ? evt : evt.target.getAttribute("data-type");
+    // if (joystick) {
+    //   joystick.destroy();
+    // }
+    // joystick = nipplejs.create(joysticks[type]);
     //bindNipple();
   }
 };
@@ -150,7 +213,7 @@ export default {
 <style lang="sass" scoped>
 .custom-area
   width: 90%
-  height: 480px
+  height: 340px
   border-radius: 3px
   padding: 8px
 
