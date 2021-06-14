@@ -15,10 +15,12 @@ const sockets = {
     console.log(payload);
     socket.emit(constants.TYPE_STRING, payload);
   },
-
   keyTap(payload) {
     console.log(payload);
     socket.emit(constants.KEY_TAP, payload);
+  },
+  scrollMouse(x, y) {
+    socket.emit(constants.SCROLL_MOUSE, { x, y });
   }
 };
 

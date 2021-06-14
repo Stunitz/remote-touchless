@@ -1,22 +1,38 @@
 <template>
   <div class="q-pa-md row justify-center">
-    <input
-      @keypress="handleKeypress()"
-      type="text"
-      style="margin: 0 16px 10px 16px;"
-      v-model="lastValue"
-    />
-    <q-btn
-      color="primary"
-      @click="keyTap('backspace')"
-      rounded
-      style="margin: 0 16px 10px 0px;"
-      >BACK</q-btn
-    >
+    <div style="width: 100%; " class="row justify-center ">
+      <input
+        @input="handleInput"
+        type="text"
+        style="width: 100%; margin: 0 40px 10px 40px;"
+        v-model="lastValue"
+      />
+    </div>
+    <div style="width: 100%; " class="row justify-center ">
+      <q-btn
+        color="primary"
+        @click="keyTap('backspace')"
+        style="margin: 0 16px 10px 0px;"
+        >BACK</q-btn
+      >
 
+      <q-btn
+        color="primary"
+        style="margin: 0 16px 10px 0px;"
+        @click="keyTap('space')"
+        >SPACE</q-btn
+      >
+      <q-btn
+        color="primary"
+        style="margin: 0 16px 10px 0px;"
+        @click="keyTap('enter')"
+        >ENTER</q-btn
+      >
+    </div>
     <q-card
       cols="10"
       v-touch-pan.prevent.mouse="handlePan"
+      @click="handleClick('left')"
       class="custom-area cursor-pointer bg-primary text-white shadow-2 relative-position row flex-center"
     >
       <div v-if="panning">
@@ -84,32 +100,45 @@
     </q-card>
 
     <div style="width: 100%; " class="q-pa-md row justify-center ">
-      <q-btn-group rounded>
+      <q-btn-group>
+        <q-btn @click="keyTap('up')" rounded color="primary" label="🔼" />
+
+        <q-btn
+          @click="keyTap('down')"
+          rounded
+          auto-close
+          color="primary"
+          label="🔽"
+        />
+      </q-btn-group>
+    </div>
+    <div style="width: 100%; " class="row justify-center ">
+      <q-btn-group>
         <q-btn
           @click="handleClick('left')"
-          rounded
           color="primary"
-          label="LEFT"
+          label="LEFT CLICK"
         />
 
         <q-btn
           @click="handleClick('right')"
-          rounded
           auto-close
           color="primary"
-          label="RIGHT"
+          label="RIGHT CLICK"
         />
       </q-btn-group>
     </div>
+
     <div style="width: 100%; " class=" row justify-center ">
-      <q-toggle
+      <!-- <q-toggle
         cols="2"
         v-model="showInfo"
         checked-icon="check"
         color="primary"
         unchecked-icon="clear"
         label="Show meta"
-      />
+      /> -->
+
       <q-slider label v-model="sensitivity" :min="1" :max="10" />
       <q-badge style="height: 26px; font-size: 14px;" color="primary">
         Sensitivity: {{ sensitivity }} (1 to 10)
@@ -120,9 +149,7 @@
 
 <script>
 import socket from "../utils/socket";
-import { throttle } from "lodash";
-// Module
-import nipplejs from "nipplejs";
+
 export default {
   data() {
     return {
@@ -133,7 +160,9 @@ export default {
       delay: 700,
       clicks: 0,
       timer: null,
-      lastValue: ""
+      lastValue: "",
+      interval: false,
+      test: ""
     };
   },
 
@@ -174,38 +203,20 @@ export default {
       socket.mouseClick({ button: button, double });
     },
 
-    handleKeypress() {
-      console.log("typing: ", this.lastValue);
-      socket.keypress(this.lastValue);
-      this.lastValue = "";
+    handleInput(event) {
+      if (event.data === undefined) return;
+      this.test = event.data;
+      // alert(event.data);
+      let newValue = event.data[event.data.length - 1];
+      newValue = newValue === "" || newValue === " " ? " " : newValue;
+      console.log("typing: ", newValue);
+      socket.keypress(newValue);
+      this.lastValue = newValue;
     },
     keyTap(key) {
       console.log("keyTap: ", key);
       socket.keyTap(key);
     }
-  },
-
-  mounted() {
-    // var joysticks = {Hello world!
-    //   static: {
-    //     zone: document.querySelector(".zone.static"),
-    //     mode: "static",
-    //     position: {
-    //       left: "50%",
-    //       top: "50%"
-    //     },
-    //     color: "blue"
-    //   }
-    // };
-    // let joystick;
-    // let evt = "static";
-    // var type =
-    //   typeof evt === "string" ? evt : evt.target.getAttribute("data-type");
-    // if (joystick) {
-    //   joystick.destroy();
-    // }
-    // joystick = nipplejs.create(joysticks[type]);
-    //bindNipple();
   }
 };
 </script>

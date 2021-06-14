@@ -25,6 +25,12 @@ function handleSocketEvents(socket, robot) {
     console.log("key tap: ", value);
     robot.keyTap(value);
   });
+
+  socket.on(constants.SCROLL_MOUSE, ({ x = 0, y = 0 }) => {
+    console.log("scroll mouse x:", x);
+    console.log("scroll mouse y:", y);
+    robot.scrollMouse(x, y);
+  });
 }
 
 module.exports = handleSocketEvents;
