@@ -1,8 +1,38 @@
 <template>
   <div class="q-pa-md row justify-center">
+    <div style="width: 100%; " class="row justify-center ">
+      <input
+        @input="handleInput"
+        type="text"
+        style="width: 100%; margin: 0 40px 10px 40px;"
+        v-model="lastValue"
+      />
+    </div>
+    <div style="width: 100%; " class="row justify-center ">
+      <q-btn
+        color="primary"
+        @click="keyTap('backspace')"
+        style="margin: 0 16px 10px 0px;"
+        >BACK</q-btn
+      >
+
+      <q-btn
+        color="primary"
+        style="margin: 0 16px 10px 0px;"
+        @click="keyTap('space')"
+        >SPACE</q-btn
+      >
+      <q-btn
+        color="primary"
+        style="margin: 0 16px 10px 0px;"
+        @click="keyTap('enter')"
+        >ENTER</q-btn
+      >
+    </div>
     <q-card
       cols="10"
       v-touch-pan.prevent.mouse="handlePan"
+      @click="handleClick('left')"
       class="custom-area cursor-pointer bg-primary text-white shadow-2 relative-position row flex-center"
     >
       <div v-if="panning">
@@ -68,38 +98,71 @@
         <q-icon name="touch_app" />
       </div>
     </q-card>
+
     <div style="width: 100%; " class="q-pa-md row justify-center ">
-      <q-toggle
+      <q-btn-group>
+        <q-btn @click="keyTap('up')" rounded color="primary" label="🔼" />
+
+        <q-btn
+          @click="keyTap('down')"
+          rounded
+          auto-close
+          color="primary"
+          label="🔽"
+        />
+      </q-btn-group>
+    </div>
+    <div style="width: 100%; " class="row justify-center ">
+      <q-btn-group>
+        <q-btn
+          @click="handleClick('left')"
+          color="primary"
+          label="LEFT CLICK"
+        />
+
+        <q-btn
+          @click="handleClick('right')"
+          auto-close
+          color="primary"
+          label="RIGHT CLICK"
+        />
+      </q-btn-group>
+    </div>
+
+    <div style="width: 100%; " class=" row justify-center ">
+      <!-- <q-toggle
         cols="2"
         v-model="showInfo"
         checked-icon="check"
         color="primary"
         unchecked-icon="clear"
         label="Show meta"
-      />
+      /> -->
+
       <q-slider label v-model="sensitivity" :min="1" :max="10" />
       <q-badge style="height: 26px; font-size: 14px;" color="primary">
         Sensitivity: {{ sensitivity }} (1 to 10)
       </q-badge>
-    
-
     </div>
-
   </div>
 </template>
 
 <script>
 import socket from "../utils/socket";
-import { throttle } from "lodash";
-// Module
-import nipplejs from "nipplejs";
+
 export default {
   data() {
     return {
       info: null,
       panning: false,
       sensitivity: 2,
-      showInfo: false
+      showInfo: false,
+      delay: 700,
+      clicks: 0,
+      timer: null,
+      lastValue: "",
+      interval: false,
+      test: ""
     };
   },
 
@@ -118,31 +181,42 @@ export default {
         y: info.delta.y * this.sensitivity,
         scroll: false
       });
-    }
-  },
+    },
 
-  mounted() {
-    var joysticks = {
-      static: {
-        zone: document.querySelector(".zone.static"),
-        mode: "static",
-        position: {
-          left: "50%",
-          top: "50%"
-        },
-        color: "blue"
+    handleClick(button) {
+      this.clicks++;
+      let double = false;
+
+      if (this.clicks === 1) {
+        console.log("single click");
+        this.timer = setTimeout(() => {
+          this.clicks = 0;
+        }, this.delay);
+        double = false;
+      } else {
+        console.log("double click");
+        clearTimeout(this.timer);
+        this.clicks = 0;
+        double = true;
       }
-    };
-    let joystick;
-    let evt = "static";
 
-    var type =
-      typeof evt === "string" ? evt : evt.target.getAttribute("data-type");
-    if (joystick) {
-      joystick.destroy();
+      socket.mouseClick({ button: button, double });
+    },
+
+    handleInput(event) {
+      if (event.data === undefined) return;
+      this.test = event.data;
+      // alert(event.data);
+      let newValue = event.data[event.data.length - 1];
+      newValue = newValue === "" || newValue === " " ? " " : newValue;
+      console.log("typing: ", newValue);
+      socket.keypress(newValue);
+      this.lastValue = newValue;
+    },
+    keyTap(key) {
+      console.log("keyTap: ", key);
+      socket.keyTap(key);
     }
-    joystick = nipplejs.create(joysticks[type]);
-    //bindNipple();
   }
 };
 </script>
@@ -150,7 +224,7 @@ export default {
 <style lang="sass" scoped>
 .custom-area
   width: 90%
-  height: 480px
+  height: 340px
   border-radius: 3px
   padding: 8px
 
